@@ -1,0 +1,15 @@
+<body style="background:#23272a; color:white; font-family:sans-serif; text-align:center;">
+    <h2>Hoşgeldin {{ user['username'] }}</h2>
+    <div style="display:flex; flex-wrap:wrap; justify-content:center;">
+        {% for g in guilds %}
+        <div style="background:#2c2f33; padding:20px; margin:10px; border-radius:10px; border:1px solid #7289da; width:200px;">
+            <h3>{{ g['name'] }}</h3>
+            {% if g['bot_in'] %}
+                <a href="/manage/{{ g['id'] }}" style="background:#7289da; color:white; padding:10px; text-decoration:none; border-radius:5px;">Yönet</a>
+            {% else %}
+                <a href="https://discord.com/api/oauth2/authorize?client_id=1348380088005034074&permissions=8&scope=bot" style="background:#43b581; color:white; padding:10px; text-decoration:none; border-radius:5px;">Botu Ekle</a>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</body>
