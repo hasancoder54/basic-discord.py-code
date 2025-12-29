@@ -1,0 +1,18 @@
+<body style="background:#23272a; color:white; font-family:sans-serif;">
+    <center>
+        <h1>{{ guild.name }} - Yönetim Paneli</h1>
+        <form method="POST" style="background:#2c2f33; display:inline-block; padding:30px; border-radius:15px;">
+            <p>
+                <input type="checkbox" name="link_en" {% if settings['link_en'] %}checked{% endif %}>
+                Link Engelini Aktif Et
+            </p>
+            <p>
+                <input type="checkbox" name="yonetici_s" {% if settings['yonetici_serbest'] %}checked{% endif %}>
+                Yöneticiler Link Atabilsin (Serbest Mod)
+            </p>
+            <button type="submit" style="padding:10px 20px; background:#7289da; color:white; border:none; border-radius:5px; cursor:pointer;">Ayarları Kaydet</button>
+        </form>
+        <br><br>
+        <a href="/" style="color:#7289da;">Geri Dön</a>
+    </center>
+</body>
