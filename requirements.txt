@@ -3,3 +3,4 @@ flask
 motor
 dnspython
 python-dotenv
+requests
