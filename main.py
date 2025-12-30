@@ -8,14 +8,14 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# --- 1. AYARLAR VE ÇEVRE DEĞİŞKENLERİ ---
+# --- 1. AYARLAR ---
 TOKEN = os.getenv("TOKEN")
 MONGO_URI = os.getenv("MONGO_URI")
 CLIENT_ID = os.getenv("CLIENT_ID")
 CLIENT_SECRET = os.getenv("CLIENT_SECRET")
 REDIRECT_URI = os.getenv("REDIRECT_URI")
 
-# Discord Bot Tanımı
+# Bot Ayarları
 intents = discord.Intents.default()
 intents.guilds = True
 intents.members = True
@@ -38,10 +38,10 @@ async def get_db_settings(guild_id):
             return default
         return data
     except Exception as e:
-        print(f"MongoDB Hatası: {e}")
+        print(f"MongoDB Bağlantı Hatası: {e}")
         return {"link_en": True, "yonetici_serbest": False}
 
-# --- 3. BOT KOMUTLARI (MODERASYON) ---
+# --- 3. BOT KOMUTLARI ---
 @bot.command()
 @commands.has_permissions(manage_messages=True)
 async def temizle(ctx, miktar: int = 10):
@@ -54,10 +54,10 @@ async def ban(ctx, member: discord.Member, *, sebep="Belirtilmedi"):
     await member.ban(reason=sebep)
     await ctx.send(f"🚫 **{member.name}** yasaklandı.")
 
-# --- 4. BOT OLAYLARI (KORUMA FİLTRESİ) ---
+# --- 4. BOT OLAYLARI (KORUMA VE FİLTRE) ---
 @bot.event
 async def on_ready():
-    print(f"✅ Bot Giriş Yaptı: {bot.user.name}")
+    print(f"✅ Bot Aktif: {bot.user.name}")
 
 @bot.event
 async def on_message(message):
@@ -65,12 +65,12 @@ async def on_message(message):
     
     setts = await get_db_settings(message.guild.id)
     is_admin = message.author.guild_permissions.administrator
-    serbest = setts.get("yonetici_serbest", False)
-
+    
+    # Link Engel Sistemi
     if setts.get("link_en") and "http" in message.content.lower():
-        if not (is_admin and serbest):
+        if not (is_admin and setts.get("yonetici_serbest")):
             await message.delete()
-            return await message.channel.send(f"⚠️ {message.author.mention}, linkler yasak!", delete_after=3)
+            return await message.channel.send(f"⚠️ {message.author.mention}, link paylaşımı yasaktır!", delete_after=3)
 
     await bot.process_commands(message)
 
@@ -86,7 +86,7 @@ def index():
             user = requests.get("https://discord.com/api/users/@me", headers=headers).json()
             guilds = requests.get("https://discord.com/api/users/@me/guilds", headers=headers).json()
             
-            # GÜVENLİK: Sadece yönetici yetkisi (0x8) olanları listele
+            # Sadece yönetici (0x8) yetkisi olan sunucuları filtrele
             admin_guilds = [g for g in guilds if (int(g['permissions']) & 0x8) == 0x8]
             for g in admin_guilds:
                 g['bot_in'] = bot.get_guild(int(g['id'])) is not None
@@ -110,22 +110,22 @@ def callback():
     if r.status_code == 200:
         session['token'] = r.json().get('access_token')
         return redirect('/')
-    return "Giriş başarısız, lütfen tekrar deneyin."
+    return "Giriş işlemi başarısız. Lütfen tekrar deneyin."
 
 @app.route('/manage/<guild_id>', methods=['GET', 'POST'])
 async def manage(guild_id):
-    # GÜVENLİK ADIMI: Kullanıcı giriş yapmış mı?
+    # GÜVENLİK 1: Oturum kontrolü
     if 'token' not in session: return redirect('/login')
     
     try:
         headers = {'Authorization': f"Bearer {session['token']}"}
         guilds_r = requests.get("https://discord.com/api/users/@me/guilds", headers=headers).json()
         
-        # GÜVENLİK ADIMI: URL'den elle girmeye çalışan kişi bu sunucuda YÖNETİCİ mi?
+        # GÜVENLİK 2: Kişi bu sunucuda gerçekten yönetici mi? (URL sızmasını önler)
         is_admin = any(g['id'] == str(guild_id) and (int(g['permissions']) & 0x8) == 0x8 for g in guilds_r)
         
         if not is_admin:
-            return "⛔ YETKİSİZ ERİŞİM: Bu sunucuyu yönetmek için yönetici yetkiniz olmalı!"
+            return "⛔ Yetkisiz Erişim! Bu sunucuyu yönetme izniniz yok."
 
         guild_obj = bot.get_guild(int(guild_id))
         if not guild_obj: 
@@ -139,22 +139,22 @@ async def manage(guild_id):
                 {"$set": {"link_en": l_en, "yonetici_serbest": y_s}}, 
                 upsert=True
             )
-            return redirect(f'/manage/{guild_id}?success=1')
+            return redirect(f'/manage/{guild_id}')
         
         settings = await get_db_settings(guild_id)
-        # settings verisi None ise boş dict göndererek HTML'in çökmesini engelle
-        return render_template('manage.html', settings=(settings or {}), guild=guild_obj)
+        # Yönetim için app.html dosyasını çağırıyoruz
+        return render_template('app.html', settings=(settings or {}), guild=guild_obj)
         
     except Exception as e:
-        print(f"HATA DETAYI (/manage): {e}")
-        return f"Yönetim Paneli Hatası: {str(e)}"
+        print(f"HATA (/manage): {e}")
+        return f"Sistem hatası oluştu: {str(e)}"
 
 # --- 6. ÇALIŞTIRMA ---
 def run_web():
     app.run(host='0.0.0.0', port=10000)
 
 if __name__ == "__main__":
-    # Web sunucusunu ayrı bir kolda (Thread) başlat
+    # Web panelini başlat
     Thread(target=run_web).start()
-    # Botu ana kolda başlat
+    # Botu başlat
     bot.run(TOKEN)
