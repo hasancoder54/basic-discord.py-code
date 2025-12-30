@@ -1,44 +1,85 @@
 <!DOCTYPE html>
-<html>
+<html lang="tr">
 <head>
-    <title>Yönet: {{ guild.name }}</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ guild.name }} | Yönetim Paneli</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { background: #0f172a; color: white; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .panel { background: #1e293b; padding: 40px; border-radius: 24px; width: 400px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); text-align: center; }
-        .switch { position: relative; display: inline-block; width: 60px; height: 34px; }
+        :root { --primary: #38bdf8; --bg: #0f172a; --card: rgba(30, 41, 59, 0.7); }
+        body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; overflow-x: hidden; }
+        
+        /* Arka Plan Animasyonu */
+        .circles { position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; z-index: -1; }
+        .circles li { position: absolute; display: block; list-style: none; width: 20px; height: 20px; background: rgba(56, 189, 248, 0.1); animation: animate 25s linear infinite; bottom: -150px; }
+        @keyframes animate { 0%{ transform: translateY(0) rotate(0deg); opacity: 1; border-radius: 0; } 100%{ transform: translateY(-1000px) rotate(720deg); opacity: 0; border-radius: 50%; } }
+
+        .panel-container { background: var(--card); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); padding: 40px; border-radius: 30px; width: 90%; max-width: 500px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); animation: fadeIn 0.8s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .guild-header { text-align: center; margin-bottom: 30px; }
+        .guild-icon { width: 100px; height: 100px; border-radius: 50%; border: 4px solid var(--primary); box-shadow: 0 0 20px rgba(56, 189, 248, 0.4); margin-bottom: 15px; }
+        
+        .setting-box { background: rgba(15, 23, 42, 0.6); border-radius: 20px; padding: 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; transition: 0.3s; border: 1px solid transparent; }
+        .setting-box:hover { border-color: var(--primary); background: rgba(15, 23, 42, 0.8); }
+
+        /* Modern Toggle Switch */
+        .switch { position: relative; display: inline-block; width: 55px; height: 28px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #334155; transition: .4s; border-radius: 34px; }
-        input:checked + .slider { background-color: #38bdf8; }
-        .slider:before { position: absolute; content: ""; height: 26px; width: 26px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .slider:before { transform: translateX(26px); }
-        .setting-item { display: flex; justify-content: space-between; align-items: center; margin: 25px 0; background: #334155; padding: 15px; border-radius: 12px; }
-        .btn-save { background: #38bdf8; color: #000; border: none; padding: 15px; width: 100%; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.3s; }
-        .btn-save:hover { background: #7dd3fc; }
+        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--primary); }
+        input:checked + .slider:before { transform: translateX(27px); }
+
+        .btn-save { background: var(--primary); color: #0f172a; border: none; padding: 15px; width: 100%; border-radius: 15px; font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.3s; display: flex; justify-content: center; align-items: center; gap: 10px; }
+        .btn-save:hover { transform: scale(1.02); box-shadow: 0 0 20px rgba(56, 189, 248, 0.4); }
+        
+        .back-link { display: inline-block; color: #94a3b8; text-decoration: none; margin-bottom: 20px; transition: 0.3s; }
+        .back-link:hover { color: var(--primary); }
     </style>
 </head>
 <body>
-    <div class="panel">
-        <a href="/" style="color:#94a3b8; text-decoration:none; float:left"><i class="fas fa-arrow-left"></i> Geri</a>
-        <br><br>
-        <img src="{{ guild.icon.url if guild.icon else '' }}" style="width:100px; border-radius:50%">
-        <h2>{{ guild.name }}</h2>
+    <ul class="circles"><li></li><li></li><li></li><li></li><li></li></ul>
+
+    <div class="panel-container">
+        <a href="/" class="back-link"><i class="fas fa-chevron-left"></i> Geri Dön</a>
+        
+        <div class="guild-header">
+            {% if guild.icon %}
+                <img src="{{ guild.icon.url }}" class="guild-icon">
+            {% else %}
+                <div class="guild-icon" style="background: #334155; display: flex; align-items: center; justify-content: center; font-size: 40px;">{{ guild.name[0] }}</div>
+            {% endif %}
+            <h2 style="margin: 0;">{{ guild.name }}</h2>
+            <p style="color: #94a3b8; font-size: 14px;">Sunucu Ayarları</p>
+        </div>
+
         <form method="POST">
-            <div class="setting-item">
-                <span><i class="fas fa-link"></i> Link Engeli</span>
+            <div class="setting-box">
+                <div>
+                    <i class="fas fa-link" style="color: var(--primary);"></i>
+                    <strong style="margin-left: 10px;">Link Engeli</strong>
+                </div>
                 <label class="switch">
-                    <input type="checkbox" name="link_en" {% if settings['link_en'] %}checked{% endif %}>
+                    <input type="checkbox" name="link_en" {% if settings.get('link_en') %}checked{% endif %}>
                     <span class="slider"></span>
                 </label>
             </div>
-            <div class="setting-item">
-                <span><i class="fas fa-user-shield"></i> Yönetici Muafiyeti</span>
+
+            <div class="setting-box">
+                <div>
+                    <i class="fas fa-user-shield" style="color: #f43f5e;"></i>
+                    <strong style="margin-left: 10px;">Yönetici Muafiyeti</strong>
+                </div>
                 <label class="switch">
-                    <input type="checkbox" name="yonetici_s" {% if settings['yonetici_serbest'] %}checked{% endif %}>
+                    <input type="checkbox" name="yonetici_s" {% if settings.get('yonetici_serbest') %}checked{% endif %}>
                     <span class="slider"></span>
                 </label>
             </div>
-            <button type="submit" class="btn-save"><i class="fas fa-save"></i> AYARLARI KAYDET</button>
+
+            <button type="submit" class="btn-save">
+                <i class="fas fa-save"></i> DEĞİŞİKLİKLERİ KAYDET
+            </button>
         </form>
     </div>
 </body>
